@@ -176,6 +176,12 @@ def cmd_sources(args):
     print(f"\n  {DIM}共 {len(DEFAULT_FEEDS)} 个源，可在 feeds.py 中自定义{RESET}\n")
 
 
+def cmd_serve(args):
+    """Start the web server for mobile access."""
+    from .web import run_server
+    run_server(host=args.host, port=args.port)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="ai-daily",
@@ -202,6 +208,12 @@ def main():
     # sources
     p_sources = subparsers.add_parser("sources", help="查看RSS订阅源")
     p_sources.set_defaults(func=cmd_sources)
+
+    # serve
+    p_serve = subparsers.add_parser("serve", help="启动 Web 界面（手机访问）")
+    p_serve.add_argument("-p", "--port", type=int, default=8080, help="端口号 (默认8080)")
+    p_serve.add_argument("--host", default="0.0.0.0", help="监听地址 (默认0.0.0.0)")
+    p_serve.set_defaults(func=cmd_serve)
 
     args = parser.parse_args()
     if not args.command:

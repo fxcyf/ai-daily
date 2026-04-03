@@ -32,6 +32,18 @@ python -m pytest tests/ -v
 | test_stats | 统计数据汇总 |
 | test_recent_entries | 最近N天记录查询 |
 
+### web 模块 (test_web.py)
+
+| 测试 | 描述 |
+|------|------|
+| test_page_wrapper | HTML 页面包装：viewport、active nav |
+| test_render_digest_empty | 无文章时的空状态页面 |
+| test_render_digest_with_articles | 有文章时正确渲染标题/来源/分类 |
+| test_render_log_form | 打卡表单包含所有字段 |
+| test_render_log_success | 打卡成功后显示提示 |
+| test_render_stats | 统计页面包含所有指标 |
+| test_xss_prevention | XSS 防护：script/onerror 被转义 |
+
 ## 添加新测试
 
 新增功能时，在对应的 `tests/test_*.py` 中添加测试用例，确保：
