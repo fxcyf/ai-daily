@@ -7,7 +7,7 @@ name = "ai-daily"
 version = "0.1.0"
 description = "每日AI动态追踪 + 微学习打卡工具"
 requires-python = ">=3.10"
-# 零外部依赖，仅使用标准库
+dependencies = ["anthropic>=0.40.0"]
 
 [project.scripts]
 ai-daily = "ai_daily.cli:main"

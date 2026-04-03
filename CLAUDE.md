@@ -1,4 +1,4 @@
-# random — 项目指南
+# ai-daily — 项目指南
 
 > **重要：Claude 必须自主维护本文件。** 架构或约定变化时更新，保持简洁。
 
@@ -76,6 +76,20 @@ rebase 发生冲突时：
 - **必须附上 git commit ID**
 
 **同样的问题不要犯两次！**
+
+## 架构概览
+
+- `ai_daily/feeds.py` — RSS 聚合 + 关键词过滤
+- `ai_daily/llm.py` — Claude API 生成中文日报（使用 claude-haiku-4-5）
+- `ai_daily/obsidian.py` — 写入 Obsidian vault（含 git 自动同步）
+- `ai_daily/config.py` — 配置管理（~/.ai-daily/config.json + 环境变量）
+- `ai_daily/tracker.py` — 学习打卡 + 连续天数
+- `ai_daily/web.py` — 移动端 Web 界面
+- `ai_daily/cli.py` — CLI 入口（digest/log/stats/sources/generate/config/serve）
+
+## 外部依赖
+
+- `anthropic` — Claude API SDK（generate 命令需要）
 
 ## 注意事项
 

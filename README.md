@@ -1,27 +1,57 @@
-# ai-daily — 每日AI动态追踪 + 微学习打卡
+# ai-daily — 每日AI动态追踪 + 智能日报 + Obsidian 联动
 
-一个零依赖的 Python CLI 工具，帮你每天花几分钟跟踪 AI/ML/Agent 领域最新动态，并养成持续学习的习惯。
+一个 Python CLI 工具，帮你每天花几分钟跟踪 AI/ML/Agent 领域最新动态，用 AI 生成中文日报，自动写入 Obsidian 笔记库。
 
 ## 功能
 
 - **RSS 聚合** — 从 8 个高质量源（HN、ArXiv、MIT Tech Review、OpenAI、Anthropic 等）抓取最新内容
 - **智能过滤** — 基于关键词匹配和相关度评分，只展示 AI 相关内容
+- **AI 日报生成** — 调用 Claude API 将文章整理成中文日报，按主题分组、提炼要点，手机上直接看
+- **Obsidian 联动** — 日报自动写入 Obsidian vault，支持 git 自动同步
 - **学习打卡** — 记录每天读了什么、学了什么、花了多少时间
 - **连续追踪** — 维护学习连续天数，激励你坚持每日学习
-- **零外部依赖** — 仅使用 Python 标准库
 
 ## 安装
 
 ```bash
-# 方式1: 直接运行
-python -m ai_daily
-
-# 方式2: 安装为命令行工具
 pip install -e .
-ai-daily
+```
+
+## 初始配置
+
+```bash
+# 设置 Anthropic API Key（用于 AI 日报生成）
+ai-daily config --api-key sk-ant-xxx
+
+# 设置 Obsidian vault 路径
+ai-daily config --vault ~/Documents/MyVault
+
+# 查看当前配置
+ai-daily config
+```
+
+也可以通过环境变量配置：
+```bash
+export ANTHROPIC_API_KEY=sk-ant-xxx
+export AI_DAILY_OBSIDIAN_VAULT=~/Documents/MyVault
 ```
 
 ## 使用
+
+### 生成 AI 日报（核心功能）
+
+```bash
+ai-daily generate          # 抓取文章 → AI 生成中文日报 → 写入 Obsidian
+ai-daily generate -c 20    # 基于 20 篇文章生成
+```
+
+日报会自动保存到 `{vault}/AI-Daily/2026-04-03.md`，打开 Obsidian 即可阅读。
+
+配合 cron 每天自动运行：
+```bash
+# 每天早上 8 点自动生成日报
+0 8 * * * cd /path/to/ai-daily && ai-daily generate
+```
 
 ### 查看今日AI动态
 
@@ -69,22 +99,19 @@ ai-daily serve -p 3000   # 自定义端口
 
 ## 每日使用建议
 
-1. 早上或午休时运行 `ai-daily digest`，浏览标题（2分钟）
-2. 挑 1-2 篇感兴趣的点开看看（5-10分钟）
-3. 看完后 `ai-daily log -t "xxx" -n "学到了xxx" -m 10` 打卡
-4. 周末 `ai-daily stats` 回顾本周学习
+**最简流程：** 设好 cron 后什么都不用做，每天打开 Obsidian 看日报就行。
 
-### 配合 cron 定时提醒
-
-```bash
-# 每天早上 9 点提醒
-crontab -e
-0 9 * * * cd /path/to/random && python -m ai_daily digest > /tmp/ai-daily.txt && osascript -e 'display notification "今日AI动态已更新！" with title "ai-daily"'
-```
+想深入学习时：
+1. 看日报，挑感兴趣的文章点链接深入阅读
+2. 直接在 Obsidian 的日报文件里记笔记
+3. `ai-daily log -t "xxx" -n "学到了xxx" -m 10` 打卡（可选）
+4. 周末 `ai-daily stats` 回顾
 
 ## 数据存储
 
-学习记录保存在 `~/.ai-daily/learning_log.json`，纯 JSON 格式，方便备份和迁移。
+- **AI 日报** → `{Obsidian vault}/AI-Daily/YYYY-MM-DD.md`
+- **学习记录** → `~/.ai-daily/learning_log.json`
+- **配置** → `~/.ai-daily/config.json`
 
 ## 自定义RSS源
 
@@ -93,4 +120,4 @@ crontab -e
 ## 技术要求
 
 - Python >= 3.10
-- 无需安装任何第三方包
+- `anthropic` SDK（AI 日报生成需要，`pip install -e .` 会自动安装）

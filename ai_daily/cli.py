@@ -7,6 +7,7 @@ from datetime import date, datetime, timezone
 
 from .feeds import fetch_all, DEFAULT_FEEDS, Article
 from .tracker import LearningTracker
+from .config import load_config, save_config
 
 
 # ── ANSI colors ──────────────────────────────────────────────────────
@@ -176,6 +177,79 @@ def cmd_sources(args):
     print(f"\n  {DIM}共 {len(DEFAULT_FEEDS)} 个源，可在 feeds.py 中自定义{RESET}\n")
 
 
+def cmd_generate(args):
+    """Generate AI daily digest → Obsidian vault."""
+    config = load_config()
+
+    api_key = config.get("anthropic_api_key")
+    vault_path = config.get("obsidian_vault")
+
+    if not api_key:
+        print(f"  {RED}错误: 未配置 API Key{RESET}")
+        print(f"  运行: ai-daily config --api-key YOUR_KEY")
+        print(f"  或设置环境变量: export ANTHROPIC_API_KEY=YOUR_KEY")
+        return
+    if not vault_path:
+        print(f"  {RED}错误: 未配置 Obsidian vault 路径{RESET}")
+        print(f"  运行: ai-daily config --vault /path/to/your/vault")
+        return
+
+    print(f"  {BOLD}正在抓取最新AI动态...{RESET}")
+    articles = fetch_all(max_articles=args.count)
+
+    if not articles:
+        print(f"  {YELLOW}暂未获取到文章，请检查网络连接{RESET}")
+        return
+
+    print(f"  {GREEN}抓取到 {len(articles)} 篇文章，正在生成日报...{RESET}")
+
+    from .llm import generate_digest
+    digest = generate_digest(articles, api_key)
+
+    from .obsidian import write_daily_note
+    file_path = write_daily_note(vault_path, digest)
+
+    print(f"\n  {GREEN}✓ 日报已生成！{RESET}")
+    print(f"  文件: {file_path}")
+    print(f"  打开 Obsidian 即可阅读\n")
+
+
+def cmd_config(args):
+    """Configure ai-daily settings."""
+    config = load_config()
+    changed = False
+
+    if args.api_key:
+        config["anthropic_api_key"] = args.api_key
+        changed = True
+        print(f"  {GREEN}✓ API Key 已保存{RESET}")
+
+    if args.vault:
+        from pathlib import Path
+        vault = Path(args.vault).expanduser().resolve()
+        if not vault.is_dir():
+            print(f"  {RED}错误: 目录不存在: {vault}{RESET}")
+            return
+        config["obsidian_vault"] = str(vault)
+        changed = True
+        print(f"  {GREEN}✓ Obsidian vault 路径已保存: {vault}{RESET}")
+
+    if changed:
+        save_config(config)
+    else:
+        # Show current config
+        print(f"\n  {BOLD}当前配置{RESET} (~/.ai-daily/config.json)\n")
+        api_key = config.get("anthropic_api_key", "")
+        if api_key:
+            masked = api_key[:7] + "..." + api_key[-4:]
+            print(f"  API Key:       {masked}")
+        else:
+            print(f"  API Key:       {DIM}未配置{RESET}")
+        vault = config.get("obsidian_vault", "")
+        print(f"  Obsidian vault: {vault or f'{DIM}未配置{RESET}'}")
+        print()
+
+
 def cmd_serve(args):
     """Start the web server for mobile access."""
     from .web import run_server
@@ -208,6 +282,17 @@ def main():
     # sources
     p_sources = subparsers.add_parser("sources", help="查看RSS订阅源")
     p_sources.set_defaults(func=cmd_sources)
+
+    # generate
+    p_gen = subparsers.add_parser("generate", help="生成AI日报 → Obsidian")
+    p_gen.add_argument("-c", "--count", type=int, default=15, help="文章数量 (默认15)")
+    p_gen.set_defaults(func=cmd_generate)
+
+    # config
+    p_cfg = subparsers.add_parser("config", help="配置 API Key 和 Obsidian 路径")
+    p_cfg.add_argument("--api-key", help="Anthropic API Key")
+    p_cfg.add_argument("--vault", help="Obsidian vault 路径")
+    p_cfg.set_defaults(func=cmd_config)
 
     # serve
     p_serve = subparsers.add_parser("serve", help="启动 Web 界面（手机访问）")
