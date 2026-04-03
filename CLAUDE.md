@@ -83,9 +83,7 @@ rebase 发生冲突时：
 - `ai_daily/llm.py` — Claude API 生成中文日报（使用 claude-haiku-4-5）
 - `ai_daily/obsidian.py` — 写入 Obsidian vault（含 git 自动同步）
 - `ai_daily/config.py` — 配置管理（~/.ai-daily/config.json + 环境变量）
-- `ai_daily/tracker.py` — 学习打卡 + 连续天数
-- `ai_daily/web.py` — 移动端 Web 界面
-- `ai_daily/cli.py` — CLI 入口（digest/log/stats/sources/generate/config/serve）
+- `ai_daily/cli.py` — CLI 入口（generate/config/sources）
 
 ## 外部依赖
 
