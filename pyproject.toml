@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "ai-daily"
+version = "0.1.0"
+description = "每日AI动态追踪 + 微学习打卡工具"
+requires-python = ">=3.10"
+# 零外部依赖，仅使用标准库
+
+[project.scripts]
+ai-daily = "ai_daily.cli:main"
