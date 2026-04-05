@@ -26,6 +26,7 @@ ai-daily config
 ## 使用
 
 ```bash
+ai-daily                   # 等同于 ai-daily generate
 ai-daily generate          # 抓取文章 → AI 生成中文日报 → 写入 Obsidian
 ai-daily generate -c 20    # 基于 20 篇文章生成
 ai-daily sources           # 查看 RSS 订阅源
