@@ -4,7 +4,7 @@
 
 ## Git 信息
 
-- Remote: 无（纯本地项目）
+- Remote: git@github-fxcyf:fxcyf/ai-daily.git
 - 默认分支: main
 
 ## 任务生命周期
