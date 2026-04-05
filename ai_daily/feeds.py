@@ -12,11 +12,7 @@ from email.utils import parsedate_to_datetime
 
 # 默认RSS源配置
 DEFAULT_FEEDS = [
-    {
-        "name": "Hacker News (Best)",
-        "url": "https://hnrss.org/best?q=AI+OR+LLM+OR+GPT+OR+agent+OR+machine+learning+OR+Claude+OR+OpenAI+OR+Anthropic",
-        "category": "community",
-    },
+    # ── 研究 / 论文 ──
     {
         "name": "ArXiv CS.AI",
         "url": "https://rss.arxiv.org/rss/cs.AI",
@@ -28,31 +24,49 @@ DEFAULT_FEEDS = [
         "category": "research",
     },
     {
+        "name": "ArXiv CS.LG (Machine Learning)",
+        "url": "https://rss.arxiv.org/rss/cs.LG",
+        "category": "research",
+    },
+    # ── 技术社区 ──
+    {
+        "name": "Hacker News (Best)",
+        "url": "https://hnrss.org/best?q=AI+OR+LLM+OR+GPT+OR+agent+OR+machine+learning+OR+Claude+OR+OpenAI+OR+Anthropic",
+        "category": "community",
+    },
+    # ── 技术博客 / 工具 ──
+    {
+        "name": "Hugging Face Blog",
+        "url": "https://huggingface.co/blog/feed.xml",
+        "category": "tools",
+    },
+    {
         "name": "The Batch (Andrew Ng)",
         "url": "https://www.deeplearning.ai/the-batch/feed/",
         "category": "newsletter",
     },
-    {
-        "name": "MIT Tech Review - AI",
-        "url": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
-        "category": "news",
-    },
-    {
-        "name": "OpenAI Blog",
-        "url": "https://openai.com/blog/rss.xml",
-        "category": "industry",
-    },
+    # ── 厂商研究博客 ──
     {
         "name": "Anthropic Research",
         "url": "https://www.anthropic.com/research/rss.xml",
         "category": "industry",
     },
     {
-        "name": "Hugging Face Blog",
-        "url": "https://huggingface.co/blog/feed.xml",
-        "category": "tools",
+        "name": "OpenAI Blog",
+        "url": "https://openai.com/blog/rss.xml",
+        "category": "industry",
     },
 ]
+
+# 分类权重：技术/研究内容优先，行业动态降权
+CATEGORY_WEIGHT = {
+    "research": 2.0,
+    "tools": 1.5,
+    "community": 1.2,
+    "newsletter": 1.0,
+    "news": 0.5,
+    "industry": 0.6,
+}
 
 # AI 相关关键词（用于二次过滤）
 AI_KEYWORDS = re.compile(
@@ -185,21 +199,37 @@ def fetch_feed(feed_config: dict, timeout: int = 15) -> list[Article]:
 
 
 def score_relevance(article: Article) -> float:
-    """Score how relevant an article is to AI/ML/Agent topics."""
+    """Score how relevant an article is to AI/ML/Agent topics.
+
+    Prioritizes technical depth over industry news by applying category weights.
+    """
     text = f"{article.title} {article.summary}".lower()
     matches = AI_KEYWORDS.findall(text)
-    # Unique keyword matches
     unique = set(m.lower() for m in matches)
-    # Title matches are worth more
     title_matches = AI_KEYWORDS.findall(article.title.lower())
     title_unique = set(m.lower() for m in title_matches)
 
     score = len(unique) * 1.0 + len(title_unique) * 2.0
 
-    # Boost for hot topics
+    # Boost for hot technical topics
     hot_topics = {"agent", "agentic", "llm", "rag", "mcp", "tool.use"}
     if hot_topics & unique:
         score *= 1.5
+
+    # Boost for technical depth signals (methods, benchmarks, code)
+    tech_depth_signals = re.compile(
+        r"\b(benchmark|ablation|sota|state.of.the.art|open.source|github"
+        r"|architecture|implementation|training|dataset|evaluation"
+        r"|framework|library|api|sdk|tutorial|how.to|code)\b",
+        re.IGNORECASE,
+    )
+    depth_matches = tech_depth_signals.findall(text)
+    if depth_matches:
+        score += len(set(m.lower() for m in depth_matches)) * 0.5
+
+    # Apply category weight
+    cat_weight = CATEGORY_WEIGHT.get(article.category, 1.0)
+    score *= cat_weight
 
     return round(score, 1)
 
